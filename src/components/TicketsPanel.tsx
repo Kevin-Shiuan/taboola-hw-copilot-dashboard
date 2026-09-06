@@ -1,35 +1,45 @@
+import { useMemo } from "react";
 import type { Ticket } from "../types";
 import { TICKETS } from "../data/tickets";
 import { useChatActions } from "../chat/ChatProvider";
 
+interface TicketRow extends Ticket {
+  isRepeated: boolean;
+}
+
 export function TicketsPanel() {
   const { sendMessage } = useChatActions();
 
-  // For each ticket, scan the whole list to see if this requester appears
-  // more than once, so we can flag repeat requesters.
-  function isRepeatRequester(ticket: Ticket): boolean {
-    let count = 0;
-    for (let i = 0; i < TICKETS.length; i++) {
-      if (TICKETS[i].requesterEmail === ticket.requesterEmail) count++;
+  const processedTickets = useMemo<TicketRow[]>(() => {
+    const seen = new Set<string>();
+    const repeated = new Set<string>();
+    for (const t of TICKETS) {
+      if (seen.has(t.requesterEmail)) repeated.add(t.requesterEmail);
+      seen.add(t.requesterEmail);
     }
-    return count > 1;
-  }
+    return TICKETS.map((t) => ({
+      ...t,
+      isRepeated: repeated.has(t.requesterEmail),
+    }));
+  }, []);
 
   return (
     <div className="panel">
       <h2 className="panel-title">Tickets</h2>
       <div className="ticket-list">
-        {TICKETS.map((t) => (
+        {processedTickets.map((ticket) => (
           <div
-            key={t.id}
+            key={ticket.id}
             className="ticket-row"
-            onClick={() => sendMessage("Summarize ticket: " + t.subject)}
+            onClick={() => sendMessage("Summarize ticket: " + ticket.subject)}
           >
-            <div className="ticket-subject">{t.subject}</div>
+            <div className="ticket-subject">{ticket.subject}</div>
             <div className="ticket-meta">
-              {t.requesterEmail}
-              {isRepeatRequester(t) && <span className="repeat">repeat</span>}
-              <span className={"chip chip-" + t.status}>{t.status}</span>
+              {ticket.requesterEmail}
+              {ticket.isRepeated && <span className="repeat">repeat</span>}
+              <span className={"chip chip-" + ticket.status}>
+                {ticket.status}
+              </span>
             </div>
           </div>
         ))}

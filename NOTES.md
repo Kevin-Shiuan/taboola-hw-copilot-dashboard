@@ -12,8 +12,7 @@ Support Copilot is a supportive internal tool that helps us manage our tickets. 
 
 `<App />` use `useCopilotChat()` hooks, so it re-renders on every token received and update to `messages`. Besides that, inline arrow functions (`onPick`, `onSend`, `onRegenerate`) are passed to child component, so `<TicketsPanel />`, `<CopilotSidebar />` are also re-render per token update.
 
-_Idea:_ move `messages` and stable actions into two different contexts with provider respectively, one for `messages` and one for stable actions. By this way, a component that only need action like `sendMessage()` never affected by `messages` updates. 
-
+_Idea:_ move `messages` and stable actions into two different contexts with provider respectively, one for `messages` and one for stable actions. By this way, a component that only need action like `sendMessage()` never affected by `messages` updates.
 
 **`isRepeatRequester` in `<TicketsPanel />` is O(n²) inside the map.**
 
@@ -21,39 +20,33 @@ When mapping `tickets` to render each row, it runs `isRepeatRequester()` on mapp
 
 _Idea:_ use useMemo to store process the array once and store the info of repeated emails, then simply map the processed array to render each row.
 
-
 **`assistantWords` counter in `<App />` recomputes on every message update.**
 
 The `assistantWords` counter scan through all the `messages` and count the total words, and the function runs on every message update and on every rerender of `<App />`.
 
-_Idea:_ Introduce a mechanism to add the number of word when a token is successfully received, instead of re-computing base on the whole `messages` array. 
-
+_Idea:_ Introduce a mechanism to add the number of word when a token is successfully received, instead of re-computing base on the whole `messages` array.
 
 **Chat input should use `<input />` or `<textArea />`.**
 
 Maybe this is just a preference, I feels like we should use native elements if possible, I don't see any reason to use `contentEditable` div.
 
-
 ### UX
 
-**No auto-scroll in `<MessageList />`.** 
+**No auto-scroll in `<MessageList />`.**
 When there is new message, the `<MessageList />` should scroll to the bottom.
 
-**Copy message button has UI but no implemented.** 
+**Copy message button has UI but no implemented.**
 When the user clicks the button, the message is copied to the clipboard, but there is not visual feedback to let user know the copy is done successfully.
 
-
-**Enter submits during IME composition regarding  half-composed text.**
+**Enter submits during IME composition regarding half-composed text.**
 `onKeyDown` submits on any Enter. With CJK input method, before confirming the text, pressing Enter will send the half-composed text.
 
 _Idea:_ early return when `e.nativeEvent.isComposing` is true.
-
 
 **No keyboard navigation.**
 Pressing Tab or Shift+Tab will not focus the next or previous interactive element.
 
 _Idea:_ use `aria-label` for icon-only buttons.
-
 
 ## 2. Fixing reported bug
 
@@ -62,6 +55,7 @@ Replies from copilot will stream into the same new message when it try to reply 
 Clicking regenerate on an a reply when it is still streaming will also cause the same issue.
 
 **Steps to reproduce**
+
 1. Send a message and wait for the first assistant reply.
 2. Send another message before the first reply finishes.
 
@@ -86,7 +80,6 @@ Contributing factors:
 - `sendMessage` and `regenerate` duplicate the same stream-wiring code, so the bug exists
   in two places.
 
-
 ### The Fix
 
 Give every stream an id. When a stream starts it captures the id of the assistant message it belongs to, and every update targets that id instead of "the last message":
@@ -94,9 +87,8 @@ Give every stream an id. When a stream starts it captures the id of the assistan
 `sendMessage` and `regenerate` both call `startStream`, which also removes the duplicated code. Overlapping replies are now safe by construction: each stream can only ever write to its own message, and each `onDone` closes its message.
 
 `regenerate` was changed to take the id of the clicked message. It looks up the user prompt that produce that assistant message, resets the message's content, and streams the new answer into the
-same id. I think a better solution is to save the id of the user prompt that assistant message replied to, so that we can use the id to find & get the actual user prompt instead of assuming the last user prompt before the assistant message is the one that this assistant message replied to. 
-Besides that, this fix also change the behavior of `regenerate` that used to generate a new message in the chat, but this fix the bug that it might possible stream into wrong new message. 
-
+same id. I think a better solution is to save the id of the user prompt that assistant message replied to, so that we can use the id to find & get the actual user prompt instead of assuming the last user prompt before the assistant message is the one that this assistant message replied to.
+Besides that, this fix also change the behavior of `regenerate` that used to generate a new message in the chat, but this fix the bug that it might possible stream into wrong new message.
 
 ### Testing
 
@@ -105,7 +97,6 @@ Added `src/chat/ChatProvider.test.tsx` (vitest + jsdom + `@testing-library/react
 
 Both tests fail against the original hook (interleaved content / an extra bubble) and pass
 after the fix.
-
 
 ## 3. Refactor chosen
 
@@ -117,7 +108,7 @@ Two contexts are created instead of one, because messages will update frequently
 
 What changed as part of the refactor:
 
-- `messagesRef` is introduced: `regenerate()` needs the latest `messages` state to find the prompt, simply adding `messages` to the dependency array of `useMemo()` will cause it to re-render on every token. So it's a hack to use ref here so that `regenerate()` could always use get the latest `messages` state when it needs it. And the ref is  always up to date because we use another `useEffect` to keep it updated.
+- `messagesRef` is introduced: `regenerate()` needs the latest `messages` state to find the prompt, simply adding `messages` to the dependency array of `useMemo()` will cause it to re-render on every token. So it's a hack to use ref here so that `regenerate()` could always use get the latest `messages` state when it needs it. And the ref is always up to date because we use another `useEffect` to keep it updated.
 - `MessageItem` calls `regenerate(message.id)` from context directly.
 - Consumers read from context directly: `CopilotSidebar`, `MessageList`, `ChatInput` and
   `TicketsPanel` have no props. `App` is now the provider plus static layout.
@@ -128,15 +119,28 @@ Extra changes made alongside, not strictly part of the refactor:
 - `src/components/WordCountStat.tsx`: the header word counter became its own component so
   it can subscribe to messages without causing `App` into every re-render.
 - `TicketsPanel` now imports `TICKETS` and calls `sendMessage` itself instead of receiving
-  `tickets` / `onPick` props. 
+  `tickets` / `onPick` props.
 
 ## 4. Improvement chosen
 
 **[UX Improvement] Auto-scroll the chat to the newest tokens, but only when the user is near the bottom.**
 
-This is a behavior that user expected when interact with any AI chat, without this will confuse the user and make them feels the app is not completed. 
+This is a behavior that user expected when interact with any AI chat, without this will confuse the user and make them feels the app is not completed.
 
 Only one improvement is implemented due to the requirement, but it is small and there are a few that also could be done very quickly, so I list them here:
+
 - [UX Improvement] IME guard for Enter
 - [Small Fix] replace contentEditable div with a `<textarea />`
 
+## 5. Performance / accessibility (optional)
+
+**Finished the render optimization the refactor targeted for.**
+
+- `memo(MessageItem)` Its only prop is `message`, so the component should be stable if the message stays the same.
+- `TicketsPanel` maps a processed array. So the if there is not changes in the tickets list, the array is stable and the function that check repeated will not be called after the first render.
+
+In this section, TanStack Virtual was considered to optimize the chat messages, but not implemented. Because we will need to preserve the auto-scroll behavior, and handle the streaming reply, the effort is a bit larger.
+
+## 6. AI usage
+
+Claude Code was used, it is used for checking the thoughts, and implement the code.

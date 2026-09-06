@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { Message } from "../types";
 import { useChatActions, useMessages } from "../chat/ChatProvider";
 
@@ -6,7 +6,7 @@ interface ItemProps {
   message: Message;
 }
 
-export function MessageItem({ message }: ItemProps) {
+const MessageItemBase = ({ message }: ItemProps) => {
   const { regenerate } = useChatActions();
 
   return (
@@ -17,7 +17,10 @@ export function MessageItem({ message }: ItemProps) {
       </div>
       {message.role === "assistant" && !message.streaming && (
         <div className="msg-actions">
-          <span className="icon-btn" onClick={() => navigator.clipboard.writeText(message.content)}>
+          <span
+            className="icon-btn"
+            onClick={() => navigator.clipboard.writeText(message.content)}
+          >
             ⧉
           </span>
           <span className="icon-btn" onClick={() => regenerate(message.id)}>
@@ -27,7 +30,9 @@ export function MessageItem({ message }: ItemProps) {
       )}
     </div>
   );
-}
+};
+
+const MessageItem = memo(MessageItemBase);
 
 // How close to the bottom (px) the user must be for new content to keep the
 // list pinned to the bottom. Further up than this means they are reading

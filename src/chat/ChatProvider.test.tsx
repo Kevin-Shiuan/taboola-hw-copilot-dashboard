@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { ChatProvider, useChatActions, useMessages } from "./ChatProvider";
 
 const OPEN_REPLY_START = "There are currently";
@@ -64,6 +65,30 @@ describe("ChatProvider", () => {
     expect(regenerated.content).toBe(firstAssistant.content);
     expect(regenerated.content.startsWith(OPEN_REPLY_START)).toBe(true);
     expect(regenerated.streaming).toBe(false);
+  });
+
+  it("does not re-render components that only use actions while a reply streams", async () => {
+    let actionsOnlyRenders = 0;
+    function ActionsOnly() {
+      useChatActions();
+      actionsOnlyRenders++;
+      return null;
+    }
+    function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <ChatProvider>
+          <ActionsOnly />
+          {children}
+        </ChatProvider>
+      );
+    }
+    const { result } = renderHook(() => useChatActions(), { wrapper: Wrapper });
+    const rendersBeforeSend = actionsOnlyRenders;
+
+    act(() => result.current.sendMessage("open"));
+    await flushStreams();
+
+    expect(actionsOnlyRenders).toBe(rendersBeforeSend);
   });
 
   it("keeps the same actions object across message updates", async () => {
