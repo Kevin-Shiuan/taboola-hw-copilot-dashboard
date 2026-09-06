@@ -87,9 +87,18 @@ body {
   border-radius: 10px;
   margin-left: auto;
 }
-.chip-open { background: #e7f5ff; color: #1971c2; }
-.chip-pending { background: #fff3bf; color: #997404; }
-.chip-closed { background: #e9ecef; color: #495057; }
+.chip-open {
+  background: #e7f5ff;
+  color: #1971c2;
+}
+.chip-pending {
+  background: #fff3bf;
+  color: #997404;
+}
+.chip-closed {
+  background: #e9ecef;
+  color: #495057;
+}
 
 /* ---- Copilot ---- */
 .copilot {

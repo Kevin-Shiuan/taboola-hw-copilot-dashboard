@@ -1,17 +1,22 @@
-import { useRef } from "react";
-import { useChatActions } from "../chat/ChatProvider";
+import { useRef } from 'react'
+import { useChatActions } from '../chat/ChatProvider'
 
 export function ChatInput() {
-  const { sendMessage } = useChatActions();
-  const ref = useRef<HTMLDivElement>(null);
+  const { sendMessage } = useChatActions()
+  const ref = useRef<HTMLDivElement>(null)
 
   function submit() {
-    const el = ref.current;
-    if (!el) return;
-    const text = el.innerText.trim();
-    if (text.length === 0) return;
-    sendMessage(text);
-    el.innerText = "";
+    const el = ref.current
+    if (!el) {
+      return
+    }
+
+    const text = el.innerText.trim()
+    if (text.length === 0) {
+      return
+    }
+    sendMessage(text)
+    el.innerText = ''
   }
 
   return (
@@ -22,9 +27,9 @@ export function ChatInput() {
         contentEditable
         data-placeholder="Ask the copilot..."
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submit();
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            submit()
           }
         }}
       />
@@ -32,5 +37,5 @@ export function ChatInput() {
         ➤
       </div>
     </div>
-  );
+  )
 }

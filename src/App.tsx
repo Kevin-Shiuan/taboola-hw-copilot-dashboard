@@ -1,7 +1,7 @@
-import { ChatProvider } from "./chat/ChatProvider";
-import { TicketsPanel } from "./components/TicketsPanel";
-import { CopilotSidebar } from "./components/CopilotSidebar";
-import { WordCountStat } from "./components/WordCountStat";
+import { ChatProvider } from './chat/ChatProvider'
+import { TicketsPanel } from './components/TicketsPanel'
+import { CopilotSidebar } from './components/CopilotSidebar'
+import { WordCountStat } from './components/WordCountStat'
 
 export default function App() {
   return (
@@ -17,5 +17,5 @@ export default function App() {
         </div>
       </ChatProvider>
     </div>
-  );
+  )
 }

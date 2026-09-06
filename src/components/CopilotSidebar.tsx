@@ -1,5 +1,5 @@
-import { MessageList } from "./MessageList";
-import { ChatInput } from "./ChatInput";
+import { MessageList } from './MessageList'
+import { ChatInput } from './ChatInput'
 
 export function CopilotSidebar() {
   return (
@@ -10,5 +10,5 @@ export function CopilotSidebar() {
       <MessageList />
       <ChatInput />
     </div>
-  );
+  )
 }
