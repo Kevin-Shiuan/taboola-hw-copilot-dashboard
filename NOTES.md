@@ -129,3 +129,14 @@ Extra changes made alongside, not strictly part of the refactor:
   it can subscribe to messages without causing `App` into every re-render.
 - `TicketsPanel` now imports `TICKETS` and calls `sendMessage` itself instead of receiving
   `tickets` / `onPick` props. 
+
+## 4. Improvement chosen
+
+**[UX Improvement] Auto-scroll the chat to the newest tokens, but only when the user is near the bottom.**
+
+This is a behavior that user expected when interact with any AI chat, without this will confuse the user and make them feels the app is not completed. 
+
+Only one improvement is implemented due to the requirement, but it is small and there are a few that also could be done very quickly, so I list them here:
+- [UX Improvement] IME guard for Enter
+- [Small Fix] replace contentEditable div with a `<textarea />`
+
