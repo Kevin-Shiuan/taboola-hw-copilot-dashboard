@@ -55,12 +55,16 @@ export function MessageList() {
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
-    // A new turn always jumps to the bottom, even if the user had scrolled up;
-    // streamed tokens only follow if they were already at the bottom.
+
     const newTurnAdded = messages.length > previousCount.current;
     previousCount.current = messages.length;
-    if (newTurnAdded) stickToBottom.current = true;
-    if (stickToBottom.current) el.scrollTop = el.scrollHeight;
+    if (newTurnAdded) {
+      stickToBottom.current = true;
+    }
+    const lastIsStreaming = messages[messages.length - 1]?.streaming === true;
+    if (stickToBottom.current && (newTurnAdded || lastIsStreaming)) {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [messages]);
 
   return (
