@@ -143,4 +143,4 @@ In this section, TanStack Virtual was considered to optimize the chat messages, 
 
 ## 6. AI usage
 
-Claude Code was used, it is used for checking the thoughts, and implement the code.
+Claude Code was used, it is used for checking the thoughts, and implement the code. Code changes is manually read and checked, and manually committed to the repo.
