@@ -39,6 +39,9 @@ Maybe this is just a preference, I feels like we should use native elements if p
 **No auto-scroll in `<MessageList />`.** 
 When there is new message, the `<MessageList />` should scroll to the bottom.
 
+**Copy message button has UI but no implemented.** 
+When the user clicks the button, the message is copied to the clipboard, but there is not visual feedback to let user know the copy is done successfully.
+
 
 **Enter submits during IME composition regarding  half-composed text.**
 `onKeyDown` submits on any Enter. With CJK input method, before confirming the text, pressing Enter will send the half-composed text.
@@ -51,12 +54,6 @@ Pressing Tab or Shift+Tab will not focus the next or previous interactive elemen
 
 _Idea:_ use `aria-label` for icon-only buttons.
 
-
-### Incomplete features
-
-[move to ux improvements for no visual feedback] **Copy message button has UI but no implemented.** 
-
-**Regenerate message will send new message rather than replacing the one clicked.**
 
 ## 2. Fixing reported bug
 
