@@ -1,12 +1,13 @@
 import type { Message } from "../types";
+import { useChatActions, useMessages } from "../chat/ChatProvider";
 
 interface ItemProps {
   message: Message;
-  onCopy: (text: string) => void;
-  onRegenerate: (assistantId: string) => void;
 }
 
-export function MessageItem({ message, onCopy, onRegenerate }: ItemProps) {
+export function MessageItem({ message }: ItemProps) {
+  const { regenerate } = useChatActions();
+
   return (
     <div className={"msg msg-" + message.role}>
       <div className="msg-content">
@@ -15,10 +16,10 @@ export function MessageItem({ message, onCopy, onRegenerate }: ItemProps) {
       </div>
       {message.role === "assistant" && !message.streaming && (
         <div className="msg-actions">
-          <span className="icon-btn" onClick={() => onCopy(message.content)}>
+          <span className="icon-btn" onClick={() => navigator.clipboard.writeText(message.content)}>
             ⧉
           </span>
-          <span className="icon-btn" onClick={() => onRegenerate(message.id)}>
+          <span className="icon-btn" onClick={() => regenerate(message.id)}>
             ↻
           </span>
         </div>
@@ -27,24 +28,16 @@ export function MessageItem({ message, onCopy, onRegenerate }: ItemProps) {
   );
 }
 
-interface ListProps {
-  messages: Message[];
-  onRegenerate: (assistantId: string) => void;
-}
+export function MessageList() {
+  const messages = useMessages();
 
-export function MessageList({ messages, onRegenerate }: ListProps) {
   return (
     <div className="messages">
       {messages.length === 0 && (
         <div className="empty-chat">Ask the copilot about your tickets.</div>
       )}
       {messages.map((m) => (
-        <MessageItem
-          key={m.id}
-          message={m}
-          onCopy={(text) => navigator.clipboard.writeText(text)}
-          onRegenerate={onRegenerate}
-        />
+        <MessageItem key={m.id} message={m} />
       ))}
     </div>
   );

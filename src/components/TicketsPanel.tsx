@@ -1,17 +1,16 @@
 import type { Ticket } from "../types";
+import { TICKETS } from "../data/tickets";
+import { useChatActions } from "../chat/ChatProvider";
 
-interface Props {
-  tickets: Ticket[];
-  onPick: (subject: string) => void;
-}
+export function TicketsPanel() {
+  const { sendMessage } = useChatActions();
 
-export function TicketsPanel({ tickets, onPick }: Props) {
   // For each ticket, scan the whole list to see if this requester appears
   // more than once, so we can flag repeat requesters.
   function isRepeatRequester(ticket: Ticket): boolean {
     let count = 0;
-    for (let i = 0; i < tickets.length; i++) {
-      if (tickets[i].requesterEmail === ticket.requesterEmail) count++;
+    for (let i = 0; i < TICKETS.length; i++) {
+      if (TICKETS[i].requesterEmail === ticket.requesterEmail) count++;
     }
     return count > 1;
   }
@@ -20,11 +19,11 @@ export function TicketsPanel({ tickets, onPick }: Props) {
     <div className="panel">
       <h2 className="panel-title">Tickets</h2>
       <div className="ticket-list">
-        {tickets.map((t) => (
+        {TICKETS.map((t) => (
           <div
             key={t.id}
             className="ticket-row"
-            onClick={() => onPick("Summarize ticket: " + t.subject)}
+            onClick={() => sendMessage("Summarize ticket: " + t.subject)}
           >
             <div className="ticket-subject">{t.subject}</div>
             <div className="ticket-meta">

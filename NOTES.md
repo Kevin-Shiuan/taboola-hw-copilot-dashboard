@@ -54,7 +54,7 @@ _Idea:_ use `aria-label` for icon-only buttons.
 
 ### Incomplete features
 
-**Copy message button has UI but no implemented.** 
+[move to ux improvements for no visual feedback] **Copy message button has UI but no implemented.** 
 
 **Regenerate message will send new message rather than replacing the one clicked.**
 
@@ -103,9 +103,32 @@ Besides that, this fix also change the behavior of `regenerate` that used to gen
 
 ### Testing
 
-Added `src/hooks/useCopilotChat.test.ts` (vitest + jsdom + `@testing-library/react`'s
+Added `src/chat/ChatProvider.test.tsx` (vitest + jsdom + `@testing-library/react`'s
 `renderHook`, both added as dev dependencies) with fake timers:
 
 Both tests fail against the original hook (interleaved content / an extra bubble) and pass
 after the fix.
 
+
+## 3. Refactor chosen
+
+**Area: chat state ownership.** replace `useCopilotChat` with `ChatProvider`
+
+Multiple child components from `<App />` need the state and actions from original `useCopilotChat`, and the messages should only have one truth of source, so to allow us to optimize the render, refactor to a provider will allow child components to only import the context when they need it, instead of passing from parent to child.
+
+Two contexts are created instead of one, because messages will update frequently and actions barely change, so we can avoid re-rendering the actions object on every message update.
+
+What changed as part of the refactor:
+
+- `messagesRef` is introduced: `regenerate()` needs the latest `messages` state to find the prompt, simply adding `messages` to the dependency array of `useMemo()` will cause it to re-render on every token. So it's a hack to use ref here so that `regenerate()` could always use get the latest `messages` state when it needs it. And the ref is  always up to date because we use another `useEffect` to keep it updated.
+- `MessageItem` calls `regenerate(message.id)` from context directly.
+- Consumers read from context directly: `CopilotSidebar`, `MessageList`, `ChatInput` and
+  `TicketsPanel` have no props. `App` is now the provider plus static layout.
+
+Extra changes made alongside, not strictly part of the refactor:
+
+- `src/utils/makeId.ts`: the id counter moved out of the provider for cleaner code.
+- `src/components/WordCountStat.tsx`: the header word counter became its own component so
+  it can subscribe to messages without causing `App` into every re-render.
+- `TicketsPanel` now imports `TICKETS` and calls `sendMessage` itself instead of receiving
+  `tickets` / `onPick` props. 

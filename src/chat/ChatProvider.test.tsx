@@ -1,9 +1,15 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useCopilotChat } from "./useCopilotChat";
+import { ChatProvider, useChatActions, useMessages } from "./ChatProvider";
 
 const OPEN_REPLY_START = "There are currently";
 const BILLING_REPLY_START = "Two billing-related";
+
+function renderChat() {
+  return renderHook(() => ({ messages: useMessages(), ...useChatActions() }), {
+    wrapper: ChatProvider,
+  });
+}
 
 async function flushStreams() {
   await act(async () => {
@@ -11,17 +17,21 @@ async function flushStreams() {
   });
 }
 
-describe("useCopilotChat", () => {
+describe("ChatProvider", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
   it("keeps overlapping replies in their own bubbles", async () => {
-    const { result } = renderHook(() => useCopilotChat());
+    const { result } = renderChat();
 
     act(() => result.current.sendMessage("open"));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });
+    const midStream = result.current.messages[1];
+    expect(midStream.streaming).toBe(true);
+    expect(midStream.content.length).toBeGreaterThan(0);
+
     act(() => result.current.sendMessage("billing"));
     await flushStreams();
 
@@ -34,8 +44,8 @@ describe("useCopilotChat", () => {
     expect(assistants.every((m) => m.streaming === false)).toBe(true);
   });
 
-  it("regenerate streams into the clicked bubble using its own prompt", async () => {
-    const { result } = renderHook(() => useCopilotChat());
+  it("regenerate streams a fresh answer to its own prompt into the same bubble", async () => {
+    const { result } = renderChat();
 
     act(() => result.current.sendMessage("open"));
     await flushStreams();
@@ -49,7 +59,21 @@ describe("useCopilotChat", () => {
     expect(result.current.messages).toHaveLength(4);
     const regenerated = result.current.messages[1];
     expect(regenerated.id).toBe(firstAssistant.id);
+    // The mock is deterministic per prompt, so an exact match proves the
+    // bubble was cleared before the new reply streamed in (not appended).
+    expect(regenerated.content).toBe(firstAssistant.content);
     expect(regenerated.content.startsWith(OPEN_REPLY_START)).toBe(true);
     expect(regenerated.streaming).toBe(false);
+  });
+
+  it("keeps the same actions object across message updates", async () => {
+    const { result } = renderChat();
+    const before = { sendMessage: result.current.sendMessage, regenerate: result.current.regenerate };
+
+    act(() => result.current.sendMessage("open"));
+    await flushStreams();
+
+    expect(result.current.sendMessage).toBe(before.sendMessage);
+    expect(result.current.regenerate).toBe(before.regenerate);
   });
 });

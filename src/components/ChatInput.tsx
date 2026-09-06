@@ -1,10 +1,8 @@
 import { useRef } from "react";
+import { useChatActions } from "../chat/ChatProvider";
 
-interface Props {
-  onSend: (text: string) => void;
-}
-
-export function ChatInput({ onSend }: Props) {
+export function ChatInput() {
+  const { sendMessage } = useChatActions();
   const ref = useRef<HTMLDivElement>(null);
 
   function submit() {
@@ -12,7 +10,7 @@ export function ChatInput({ onSend }: Props) {
     if (!el) return;
     const text = el.innerText.trim();
     if (text.length === 0) return;
-    onSend(text);
+    sendMessage(text);
     el.innerText = "";
   }
 
