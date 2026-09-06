@@ -89,4 +89,23 @@ Contributing factors:
 - `sendMessage` and `regenerate` duplicate the same stream-wiring code, so the bug exists
   in two places.
 
+
 ### The Fix
+
+Give every stream an id. When a stream starts it captures the id of the assistant message it belongs to, and every update targets that id instead of "the last message":
+
+`sendMessage` and `regenerate` both call `startStream`, which also removes the duplicated code. Overlapping replies are now safe by construction: each stream can only ever write to its own message, and each `onDone` closes its message.
+
+`regenerate` was changed to take the id of the clicked message. It looks up the user prompt that produce that assistant message, resets the message's content, and streams the new answer into the
+same id. I think a better solution is to save the id of the user prompt that assistant message replied to, so that we can use the id to find & get the actual user prompt instead of assuming the last user prompt before the assistant message is the one that this assistant message replied to. 
+Besides that, this fix also change the behavior of `regenerate` that used to generate a new message in the chat, but this fix the bug that it might possible stream into wrong new message. 
+
+
+### Testing
+
+Added `src/hooks/useCopilotChat.test.ts` (vitest + jsdom + `@testing-library/react`'s
+`renderHook`, both added as dev dependencies) with fake timers:
+
+Both tests fail against the original hook (interleaved content / an extra bubble) and pass
+after the fix.
+

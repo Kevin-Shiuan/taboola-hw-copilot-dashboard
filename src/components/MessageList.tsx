@@ -3,7 +3,7 @@ import type { Message } from "../types";
 interface ItemProps {
   message: Message;
   onCopy: (text: string) => void;
-  onRegenerate: () => void;
+  onRegenerate: (assistantId: string) => void;
 }
 
 export function MessageItem({ message, onCopy, onRegenerate }: ItemProps) {
@@ -18,7 +18,7 @@ export function MessageItem({ message, onCopy, onRegenerate }: ItemProps) {
           <span className="icon-btn" onClick={() => onCopy(message.content)}>
             ⧉
           </span>
-          <span className="icon-btn" onClick={onRegenerate}>
+          <span className="icon-btn" onClick={() => onRegenerate(message.id)}>
             ↻
           </span>
         </div>
@@ -29,7 +29,7 @@ export function MessageItem({ message, onCopy, onRegenerate }: ItemProps) {
 
 interface ListProps {
   messages: Message[];
-  onRegenerate: () => void;
+  onRegenerate: (assistantId: string) => void;
 }
 
 export function MessageList({ messages, onRegenerate }: ListProps) {

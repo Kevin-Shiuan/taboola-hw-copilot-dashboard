@@ -25,8 +25,8 @@ export default function App() {
         <TicketsPanel tickets={TICKETS} onPick={(text) => sendMessage(text)} />
         <CopilotSidebar
           messages={messages}
-          onSend={(text) => sendMessage(text)}
-          onRegenerate={() => regenerate()}
+          onSend={sendMessage}
+          onRegenerate={regenerate}
         />
       </div>
     </div>

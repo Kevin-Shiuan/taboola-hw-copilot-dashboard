@@ -5,7 +5,7 @@ import { ChatInput } from "./ChatInput";
 interface Props {
   messages: Message[];
   onSend: (text: string) => void;
-  onRegenerate: () => void;
+  onRegenerate: (assistantId: string) => void;
 }
 
 export function CopilotSidebar({ messages, onSend, onRegenerate }: Props) {

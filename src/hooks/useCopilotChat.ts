@@ -10,56 +10,36 @@ function makeId(): string {
 export function useCopilotChat() {
   const [messages, setMessages] = useState<Message[]>([]);
 
+  function startStream(prompt: string, assistantId: string) {
+    streamReply(prompt, {
+      onToken: (token) =>
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + token } : m))
+        ),
+      onDone: () =>
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m))
+        ),
+    });
+  }
+
   function sendMessage(text: string) {
     const userMsg: Message = { id: makeId(), role: "user", content: text, streaming: false };
     const assistantMsg: Message = { id: makeId(), role: "assistant", content: "", streaming: true };
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
-
-    streamReply(text, {
-      onToken: (token) => {
-        setMessages((prev) => {
-          const copy = [...prev];
-          const last = copy[copy.length - 1];
-          copy[copy.length - 1] = { ...last, content: last.content + token };
-          return copy;
-        });
-      },
-      onDone: () => {
-        setMessages((prev) => {
-          const copy = [...prev];
-          const last = copy[copy.length - 1];
-          copy[copy.length - 1] = { ...last, streaming: false };
-          return copy;
-        });
-      },
-    });
+    startStream(text, assistantMsg.id);
   }
 
-  function regenerate() {
-    const lastUser = [...messages].reverse().find((m) => m.role === "user");
-    if (!lastUser) return;
+  function regenerate(assistantId: string) {
+    const idx = messages.findIndex((m) => m.id === assistantId);
+    if (idx === -1) return;
+    const prompt = messages.slice(0, idx).reverse().find((m) => m.role === "user");
+    if (!prompt) return;
 
-    const assistantMsg: Message = { id: makeId(), role: "assistant", content: "", streaming: true };
-    setMessages((prev) => [...prev, assistantMsg]);
-
-    streamReply(lastUser.content, {
-      onToken: (token) => {
-        setMessages((prev) => {
-          const copy = [...prev];
-          const last = copy[copy.length - 1];
-          copy[copy.length - 1] = { ...last, content: last.content + token };
-          return copy;
-        });
-      },
-      onDone: () => {
-        setMessages((prev) => {
-          const copy = [...prev];
-          const last = copy[copy.length - 1];
-          copy[copy.length - 1] = { ...last, streaming: false };
-          return copy;
-        });
-      },
-    });
+    setMessages((prev) =>
+      prev.map((m) => (m.id === assistantId ? { ...m, content: "", streaming: true } : m))
+    );
+    startStream(prompt.content, assistantId);
   }
 
   return { messages, sendMessage, regenerate };
