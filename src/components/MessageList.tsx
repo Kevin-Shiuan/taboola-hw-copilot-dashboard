@@ -31,24 +31,14 @@ const MessageItemBase = ({ message }: ItemProps) => {
 
 const MessageItem = memo(MessageItemBase)
 
-// How close to the bottom (px) the user must be for new content to keep the
-// list pinned to the bottom. Further up than this means they are reading
-// history, and we leave their scroll position alone.
-const STICK_TO_BOTTOM_THRESHOLD_PX = 32
-
 export function MessageList() {
   const messages = useMessages()
   const listRef = useRef<HTMLDivElement>(null)
-  const stickToBottom = useRef(true)
   const previousCount = useRef(0)
 
-  function handleScroll() {
-    const el = listRef.current
-    if (!el) return
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-    stickToBottom.current = distanceFromBottom <= STICK_TO_BOTTOM_THRESHOLD_PX
-  }
-
+  // Following a streaming reply is handled by CSS scroll anchoring (see
+  // .scroll-anchor). JS only pulls the view down when a new turn is added,
+  // since the anchor cannot do that while the user is scrolled up.
   useEffect(() => {
     const el = listRef.current
     if (!el) return
@@ -56,20 +46,17 @@ export function MessageList() {
     const newTurnAdded = messages.length > previousCount.current
     previousCount.current = messages.length
     if (newTurnAdded) {
-      stickToBottom.current = true
-    }
-    const lastIsStreaming = messages[messages.length - 1]?.streaming === true
-    if (stickToBottom.current && (newTurnAdded || lastIsStreaming)) {
       el.scrollTop = el.scrollHeight
     }
   }, [messages])
 
   return (
-    <div className="messages" ref={listRef} onScroll={handleScroll}>
+    <div className="messages" ref={listRef}>
       {messages.length === 0 && <div className="empty-chat">Ask the copilot about your tickets.</div>}
       {messages.map((m) => (
         <MessageItem key={m.id} message={m} />
       ))}
+      <div className="scroll-anchor" aria-hidden />
     </div>
   )
 }

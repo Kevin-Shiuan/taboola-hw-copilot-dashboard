@@ -126,6 +126,20 @@ body {
   gap: 10px;
 }
 
+/* Only .scroll-anchor may be picked as the scroll anchor. While it is in view,
+   the browser keeps it in place as the reply above it grows, which keeps the
+   list pinned to the bottom. Once the user scrolls up it leaves the view and
+   their position is left alone. */
+.messages > * {
+  overflow-anchor: none;
+}
+
+.messages > .scroll-anchor {
+  overflow-anchor: auto;
+  flex-shrink: 0;
+  height: 1px;
+}
+
 .empty-chat {
   color: #999;
   font-size: 13px;
